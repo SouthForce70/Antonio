@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chessboard App</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    #chessboard {
+      display: grid;
+      grid-template-columns: repeat(8, 80px);
+      grid-template-rows: repeat(8, 80px);
+      border: 2px solid black;
+      position: relative;
+    }
+
+    .square {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .white {
+      background-color: #f0d9b5;
+    }
+
+    .black {
+      background-color: #b58863;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      background-color: transparent;
+      transition: background-color 0.3s;
+      z-index: 1;
+    }
+
+    .piece {
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .piece img {
+      width: 85%; /* Ora l'immagine occupa l'85% della casella */
+      height: 85%;
+      object-fit: contain;
+    }
+
+    .color-red {
+      background-color: rgba(255, 0, 0, 0.5);
+    }
+
+    .color-blue {
+      background-color: rgba(0, 0, 255, 0.5);
+    }
+
+    .color-green {
+      background-color: rgba(0, 255, 0, 0.5);
+    }
+
+    .color-yellow {
+      background-color: rgba(255, 255, 0, 0.5);
+    }
+
+    #controls {
+      margin-bottom: 10px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <select id="color-picker">
+    <option value="color-red">🔴 Rosso</option>
+    <option value="color-blue">🔵 Blu</option>
+    <option value="color-green">🟢 Verde</option>
+    <option value="color-yellow">🟡 Giallo</option>
+  </select>
+  <input type="text" id="fen-input" placeholder="Inserisci notazione FEN" />
+  <button id="apply-fen">Applica FEN</button>
+  <button id="reset-board">Resetta</button>
+</div>
+
+<div id="chessboard"></div>
+
+<script>
+  // Mappatura dei pezzi con immagini SVG
+  const pieceImages = {
+    'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
+    'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+    'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+    'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+    'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+    'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+    'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+    'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+    'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+    'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+    'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+    'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
+  };
+
+  const chessboard = document.getElementById('chessboard');
+  const colorPicker = document.getElementById('color-picker');
+  const fenInput = document.getElementById('fen-input');
+  const resetButton = document.getElementById('reset-board');
+  const applyFenButton = document.getElementById('apply-fen');
+  
+  function createBoard() {
+    chessboard.innerHTML = '';
+    for (let i = 0; i < 64; i++) {
+      const square = document.createElement('div');
+      square.classList.add('square', (i + Math.floor(i / 8)) % 2 === 0 ? 'white' : 'black');
+
+      const overlay = document.createElement('div');
+      overlay.classList.add('overlay');
+      square.appendChild(overlay);
+
+      const piece = document.createElement('div');
+      piece.classList.add('piece');
+      square.appendChild(piece);
+
+      square.addEventListener('click', () => toggleColor(overlay));
+      chessboard.appendChild(square);
+    }
+  }
+
+  function toggleColor(overlay) {
+    const selectedColor = colorPicker.value;
+    if (overlay.classList.contains(selectedColor)) {
+      overlay.classList.remove(selectedColor);
+    } else {
+      overlay.className = 'overlay'; // Resetta qualsiasi colore precedente
+      overlay.classList.add(selectedColor);
+    }
+  }
+
+  function applyFEN(fen) {
+    const rows = fen.split(' ')[0].split('/');
+    let squareIndex = 0;
+
+    rows.forEach(row => {
+      [...row].forEach(char => {
+        if (!isNaN(char)) {
+          squareIndex += parseInt(char);
+        } else {
+          const square = chessboard.children[squareIndex];
+          const pieceDiv = square.querySelector('.piece');
+          pieceDiv.innerHTML = `<img src="${pieceImages[char]}" alt="${char}">`;
+          squareIndex++;
+        }
+      });
+    });
+  }
+
+  function resetBoard() {
+    createBoard();
+    fenInput.value = ''; // Pulisce il campo del FEN
+  }
+
+  applyFenButton.addEventListener('click', () => {
+    const fen = fenInput.value;
+    resetBoard();
+    applyFEN(fen);
+  });
+
+  resetButton.addEventListener('click', resetBoard);
+
+  // Initialize
+  createBoard();
+</script>
+
+</body>
+</html>
